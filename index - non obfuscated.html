@@ -1,0 +1,492 @@
+<html>
+<head><title>Snake Xenzia</title><link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Odibee+Sans&display=swap" rel="stylesheet">
+<script src=
+"https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js">
+</script>
+</head>
+<body style="margin:0px;overflow:hidden;">
+<div style="font-family:Odibee Sans;font-size:15px;text-align:right;"><cite>Made with</cite><img src="heart.png"/><cite> by Shrish Shrivatava</cite><br>
+<a href="https://www.linkedin.com/in/shrish-shrivastava-671168121">LinkedIn: https://www.linkedin.com/in/shrish-shrivastava-671168121</a><br>
+<a href="mailto:shrish108@gmail.com">shrish108@gmail.com</a><br>
+<a href="https://api.whatsapp.com/send/?phone=9340399137&text=Hi!%20Shrish ~">Click to ping me on Whatsapp</a>
+</div>
+<canvas id="canvas" width="600" height="600"style="
+    border: 15px solid transparent;
+    background-image: url(water.gif);
+    border-radius: 50px;
+    border-image: url(water.gif) 45 round;
+">Your browser not supports canvas kindly update.</canvas>
+<br>
+
+<script>
+//Linked List data structure
+class Node {
+    constructor(value) {
+        this.value = value;
+        this.next = null;
+        this.previous = null;
+    }
+}
+
+class DoublyLinkedList {
+    constructor(value) {
+        this.head = {
+            value: value,
+            next: null,
+            previous: null
+        };
+        this.length = 1;
+        this.tail = this.head;
+    }
+
+    printList() {
+        let array = [];
+        let currentList = this.head;
+        while (currentList !== null) {
+            array.push(currentList.value);
+            currentList = currentList.next;
+        }
+        //console.log(array.join(' <--> '));
+        return array;
+    }
+
+    // Insert node at end of the list
+    append(value) {
+        let newNode = new Node(value);
+
+        this.tail.next = newNode;
+        newNode.previous = this.tail;
+        this.tail = newNode;
+
+        this.length++;
+        this.printList();
+    }
+
+    // Insert node at the start of the list
+    prepend(value) {
+        let newNode = new Node(value);
+
+        newNode.next = this.head;
+        this.head.previous = newNode;
+        this.head = newNode;
+
+        this.length++;
+        this.printList();
+    }
+
+    // Insert node at a given index
+    insert (index, value) {
+        if (!Number.isInteger(index) || index < 0 || index > this.length + 1) {
+            //console.log(`Invalid index. Current length is ${this.length}.`);
+            return this;
+        }
+
+        // If index is 0, prepend
+        if (index === 0) {
+            this.prepend(value);
+            return this;
+        }
+
+        // If index is equal to this.length, append
+        if (index === this.length) {
+            this.append(value);
+            return this;
+        }
+
+        // Reach the node at that index
+        let newNode = new Node(value);
+        let previousNode = this.head;
+
+        for (let k = 0; k < index - 1; k++) {
+            previousNode = previousNode.next;
+        }
+
+        let nextNode = previousNode.next;
+        
+        newNode.next = nextNode;
+        previousNode.next = newNode;
+        newNode.previous = previousNode;
+        nextNode.previous = newNode;
+
+        this.length++;
+        this.printList();
+    }
+
+    // Remove a node
+    remove (index) {
+        if (!Number.isInteger(index) || index < 0 || index > this.length) {
+            //console.log(`Invalid index. Current length is ${this.length}.`);
+            return this;
+        }
+
+        // Remove head
+        if (index === 0) {
+            this.head = this.head.next;
+            this.head.previous = null;
+
+            this.length--;
+            this.printList();
+            return this;
+        }
+
+        // Remove tail
+        if (index === this.length - 1) {
+            this.tail = this.tail.previous;
+            this.tail.next = null;
+
+            this.length--;
+            this.printList();
+            return this;
+        }
+
+        // Remove node at an index
+        let previousNode = this.head;
+
+        for (let k = 0; k < index - 1; k++) {
+            previousNode = previousNode.next;
+        }
+        let deleteNode = previousNode.next;
+        let nextNode = deleteNode.next;
+
+        previousNode.next = nextNode;
+        nextNode.previous = previousNode;
+
+        this.length--;
+        this.printList();
+        return this;
+    }
+}
+
+const millisToMinutesAndSeconds = (millis) => {
+    var minutes = Math.floor(millis / 60000);
+    var seconds = ((millis % 60000) / 1000).toFixed(0);
+	//ES6 interpolated literals/template literals 
+  	//If seconds is less than 10 put a zero in front.
+    return `${minutes}:${(seconds < 10 ? "0" : "")}${seconds}`;
+}  
+
+var hUpdate = '';
+let sBody;
+initialize();
+var speed; 
+var newHead;
+var xhr = new XMLHttpRequest();
+
+//getting hold of canvas element (DOM Node) using javascript
+const canvas = document.getElementById('canvas');
+canvas.width = window.innerWidth - 30;
+canvas.height = window.innerHeight - 90;
+
+/*canvas context is an object with properties and methods that you can use to render graphics inside the canvas element the context can be 2d or 3d to get the canvas' 2D rendering context, call getContext() on the <canvas> 	element, supplying '2d' as the argument*/
+const ctx = canvas.getContext('2d');  
+var img = new Image();
+img.src = 'image1.png'; //ground.jpg
+var snake = new Image();
+snake.src = 'image.png'; //scale.jpg
+var clock;
+var name;
+var score;
+var ring = [];
+var ringCountdown = 10000;
+var bingo = new Audio('bingo.mp3');
+var bgm;
+var ip;
+
+
+function initialize(){
+	alert("please turn orientation to landscape for better experience, use finger swipes. Still Recommened to play in non mobile devices.");
+	name = prompt('Please Enter your firstname');	
+	if(name !== ''){
+	$.getJSON("https://api.ipify.org?format=json", function(data) {
+		ip = data.ip;
+		xhr.open("POST","https://snakexenzia.000webhostapp.com/log.php?name="+name+"&ip="+ip+"&time=JC&score=JC&stamp="+Date.now(),true);
+		//JC = JUSTCAME
+		xhr.send();
+	})
+	score = 0000;
+	clock = 0;
+	var ds = 0;
+	speed = 10;
+	//creation of body
+	var i = 200; //snake initial length control
+	sBody = new DoublyLinkedList([i,150]);
+	i -= 10;
+	while(i>=100){
+		sBody.append([i,150]);
+		i = i - 10;
+	}
+	bgm = new Audio('bgm.mp3');
+	bgm.loop = true;
+	} else {
+		initialize();
+	}
+}
+
+function setDefault(){
+	ctx.lineWidth = 1;
+	// Color of the shadow;  RGB, RGBA, HSL, HEX, and other inputs are valid.
+	ctx.shadowColor = 0; // string
+
+	// Horizontal distance of the shadow, in relation to the text.
+	ctx.shadowOffsetX = 0; // integer
+
+	// Vertical distance of the shadow, in relation to the text.
+	ctx.shadowOffsetY = 0; // integer
+
+	// Blurring effect to the shadow, the larger the value, the greater the blur.
+	ctx.shadowBlur = 0; // integer
+}
+
+function draw(){
+	setDefault();
+	clock += 100;
+	collisionDetection();
+
+	if(hUpdate == ''){
+		//no action has been made from user thus autorun along x	
+		newHead = [(sBody.head.value[0] + speed ), sBody.head.value[1]];
+		sBody.prepend(newHead);
+		sBody.remove(sBody.length - 1);	
+	} else if(hUpdate == 'U'){
+		newHead = [sBody.head.value[0], (sBody.head.value[1] - speed )];
+		sBody.prepend(newHead);
+		sBody.remove(sBody.length - 1);
+	} else if(hUpdate == 'R'){
+		newHead = [(sBody.head.value[0] + speed ), sBody.head.value[1]];
+		sBody.prepend(newHead);
+		sBody.remove(sBody.length - 1);
+	} else if(hUpdate == 'D'){
+		newHead = [sBody.head.value[0], (sBody.head.value[1] + speed )];
+		sBody.prepend(newHead);
+		sBody.remove(sBody.length - 1);
+	} else if(hUpdate == 'L'){
+		newHead = [(sBody.head.value[0] - speed ), sBody.head.value[1]];
+		sBody.prepend(newHead);
+		sBody.remove(sBody.length - 1);
+	}
+
+	var c = sBody.printList();
+	ctx.clearRect(0, 0, canvas.width, canvas.height);
+	ctx.beginPath();
+	ctx.fillStyle = ctx.createPattern(img, 'repeat');
+	ctx.fillRect(0, 0, canvas.width, canvas.height);
+	ctx.fillStyle = ctx.createPattern(snake, 'repeat');	
+	for(i=0;i<c.length;i++){
+		ctx.fillRect(c[i][0] , c[i][1] , 15, 15);
+	}
+	ctx.closePath();
+	
+	//adding self score and clock
+	ctx.closePath();
+	ctx.font = '30px Odibee Sans';
+	ctx.fillStyle = 'yellow';
+  	ctx.fillText(millisToMinutesAndSeconds(clock) + " | " + name + " | " + score + " P", 20, 25);	
+	ctx.lineWidth = 0.2;
+	ctx.strokeStyle = 'black';
+  	ctx.strokeText(millisToMinutesAndSeconds(clock) + " | " + name + " | " + score + " P", 20, 25);
+	ctx.closePath();
+	
+	//ring
+	if(ring == []){
+		newRing();
+	} else {
+		if(ring[2] >= 0){
+			//draw sprite again or fresh
+			ctx.beginPath();
+
+			//tickness of stroke
+			ctx.lineWidth = 10;
+
+			// Color of the shadow;  RGB, RGBA, HSL, HEX, and other inputs are valid.
+			if(Math.floor(clock/1000)%2 == 0){
+				ctx.shadowColor = "yellow"; // string
+			} else {
+				ctx.shadowColor = "white"; // string
+			}
+
+			// Horizontal distance of the shadow, in relation to the text.
+			ctx.shadowOffsetX = 0; // integer
+
+			// Vertical distance of the shadow, in relation to the text.
+			ctx.shadowOffsetY = 0; // integer
+
+			// Blurring effect to the shadow, the larger the value, the greater the blur.
+			ctx.shadowBlur = 10; // integer
+
+
+
+			ctx.strokeStyle = "white";
+    			ctx.arc(ring[0],ring[1], 20,0,2* Math.PI);
+    			ctx.stroke();
+			ctx.closePath();
+		
+			ring[2] -= 100;
+		} else {
+			newRing();	
+		}
+	}
+	
+	
+}
+
+var ivl = setInterval(draw,100);
+
+//implementation of touch events from crossplatform
+//http://www.javascriptkit.com/javatutors/touchevents2.shtml snippet
+function swipedetect(el, callback){
+    var touchsurface = el,
+    swipedir,
+    startX,
+    startY,
+    distX,
+    distY,
+    threshold = 150, //required min distance traveled to be considered swipe
+    restraint = 100, // maximum distance allowed at the same time in perpendicular direction
+    allowedTime = 300, // maximum time allowed to travel that distance
+    elapsedTime,
+    startTime,
+    handleswipe = callback || function(swipedir){}
+  
+    touchsurface.addEventListener('touchstart', function(e){
+        var touchobj = e.changedTouches[0]
+        swipedir = 'none'
+        dist = 0
+        startX = touchobj.pageX
+        startY = touchobj.pageY
+        startTime = new Date().getTime() // record time when finger first makes contact with surface
+        e.preventDefault()
+    }, false)
+  
+    touchsurface.addEventListener('touchmove', function(e){
+        e.preventDefault() // prevent scrolling when inside DIV
+    }, false)
+  
+    touchsurface.addEventListener('touchend', function(e){
+        var touchobj = e.changedTouches[0]
+        distX = touchobj.pageX - startX // get horizontal dist traveled by finger while in contact with surface
+        distY = touchobj.pageY - startY // get vertical dist traveled by finger while in contact with surface
+        elapsedTime = new Date().getTime() - startTime // get time elapsed
+        if (elapsedTime <= allowedTime){ // first condition for awipe met
+            if (Math.abs(distX) >= threshold && Math.abs(distY) <= restraint){ // 2nd condition for horizontal swipe met
+                swipedir = (distX < 0)? 'left' : 'right' // if dist traveled is negative, it indicates left swipe
+            }
+            else if (Math.abs(distY) >= threshold && Math.abs(distX) <= restraint){ // 2nd condition for vertical swipe met
+                swipedir = (distY < 0)? 'up' : 'down' // if dist traveled is negative, it indicates up swipe
+            }
+        }
+        handleswipe(swipedir)
+        e.preventDefault()
+    }, false)
+}
+  
+//USAGE:
+
+var el = document.getElementsByTagName('canvas')[0]
+swipedetect(el, function(swipedir){
+    //swipedir contains either "none", "left", "right", "top", or "down"
+    bgm.loop = true;
+    bgm.autoplay = true;
+    bgm.play();
+    if (swipedir =='left' && hUpdate !== 'L'){
+        hUpdate = 'L';
+    }else if (swipedir =='right' && hUpdate !== 'R' && hUpdate !== ''){
+        hUpdate = 'R';
+    }else if (swipedir =='up' && hUpdate !== 'U'){
+        hUpdate = 'U';	
+    }else if (swipedir =='down' && hUpdate !== 'D'){
+        hUpdate = 'D';
+    }
+})
+
+
+document.onkeydown = function(h) {
+	bgm.loop = true;
+	bgm.autoplay = true;
+	bgm.play();
+	if(h.keyCode == 40 && hUpdate !== 'U'){	
+		hUpdate = 'D';
+	}else if(h.keyCode == 38 && hUpdate !== 'D'){	
+		hUpdate = 'U';	
+	}else if(h.keyCode == 39 && hUpdate !== 'L'){	
+		hUpdate = 'R';	
+	}else if(h.keyCode == 37 && hUpdate !== 'R' && hUpdate !== ''){	
+		hUpdate = 'L';	
+	}
+}
+
+function play(t){
+	if(t=='bingo'){
+		bingo.play();
+	} else if(t=='sad'){
+	
+	}
+}
+
+function increase(){
+	play('bingo');
+	sBody.append([]);
+	score += 10;
+	if(speed < 15){
+		speed += 1;
+	}
+	if(ringCountdown >= 3500){
+		ringCountdown -= 500;
+	}
+}
+
+function getRandomInt(min, max) {
+ 	min = Math.ceil(min);
+  	max = Math.floor(max);
+  	return Math.floor(Math.random() * (max - min) + min); //The maximum is exclusive and the minimum is inclusive
+}
+function newRing(){
+	ring = [getRandomInt(30, ((window.innerWidth/2.5)-100)), getRandomInt(30, ((window.innerWidth/2.5)-100)), ringCountdown]; //10 seconds countdown for ring initially
+}
+
+
+function collisionDetection(){
+	var x = sBody.head.value[0];
+	var y = sBody.head.value[1];
+
+	//border collision
+	if(x >= canvas.width || y >= canvas.height || x <= 0 || y <= 0){
+		gameOver();
+	}
+
+	//self collision
+	var c = sBody.printList();
+	for(i=1;i<c.length;i++){
+		for(j=c[i][1];j<(c[i][1]+10);j++){
+			for(k=c[i][0];k<(c[i][0]+10);k++){
+				if(x==k && y==j){
+					gameOver();
+				}
+			}
+		}
+	}
+
+	//ring collision
+	var ringAx = ring[0] - 30;
+	var ringAy = ring[1] - 30;
+	for(l=ringAx;l<ring[0]+30;l++){
+		for(m=ringAy;m<ring[1]+30;m++){
+			if(x==l && y==m){
+				newRing();
+				increase();
+			}
+		}
+	}
+		
+}
+
+function gameOver(){
+	clearInterval(ivl);
+	xhr.open("POST","https://snakexenzia.000webhostapp.com/log.php?name="+name+"&ip="+ip+"&time="+millisToMinutesAndSeconds(clock)+"&score="+score+"&stamp="+Date.now(),true);
+	xhr.send();
+	alert("Game Over :( F5 to restart.");		
+}
+</script>
+</body>
+</html>
